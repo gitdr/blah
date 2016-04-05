@@ -1,0 +1,59 @@
+  class { 'apt':
+    always_apt_update    => false,
+    apt_update_frequency => undef,
+    disable_keys         => undef,
+    proxy_host           => false,
+    proxy_port           => '8080',
+    purge_sources_list   => false,
+    purge_sources_list_d => false,
+    purge_preferences_d  => false,
+    update_timeout       => undef,
+    fancy_progress       => undef
+  }
+
+  apt_key { 'puppetlabs':
+    ensure => 'present',
+    id => '22A6C997D0F32A3D984BBE130F65842D4BD6EC30'
+  }
+
+  apt_key { 'foreman':
+    ensure => 'present',
+    id => '7059542D5AEA367F78732D02B3484CB71AA043B8'
+  }
+}
+
+node "ubuntu-mirror.home.net" inherits default {
+  file { "/etc/apt/mirror.list":
+    source => "puppet:///files/mirror.list",
+    replace => "yes"
+  }
+
+  file { "/etc/apache2/sites-available/000-default.conf":
+    source => "puppet:///files/000-default.conf",
+    replace => "yes",
+    notify => Service["apache2"]
+  }
+
+
+  file { "/apt-mirror":
+    ensure => "directory",
+    owner  => "root",
+    group  => "root",
+    mode   => 755,
+  }
+
+  package {'apache2':
+    ensure => present
+  }
+
+  service {'apache2':
+    ensure  => "running",
+    enable  => "true",
+    require => Package["apache2"],
+  }
+
+  package {'apt-mirror':
+    ensure => present
+  }
+
+}
